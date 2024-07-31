@@ -1,31 +1,30 @@
 <script>
-	import { onMount } from 'svelte';
 	import { writable } from 'svelte/store';
 	import DateRangePicker from '$lib/components/ui/DateRangePicker.svelte';
 	import TimeSheet from '$lib/components/ui/TimeSheet.svelte';
-	import CurrencyGraph from '$lib/components/ui/CurrencyGraph.svelte';
 	import StatsCard from '$lib/components/ui/StatsCard.svelte';
 	import { Slider } from '$lib/components/ui/slider/index.js';
 	import { Tabs, TabsContent, TabsList, TabsTrigger } from '$lib/components/ui/tabs/index.js';
+	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { fetchCalendarEvents } from '$lib/utils/googleCalendar.js';
 	import { improveDescription } from '$lib/utils/openai.js';
-	import { fetchCurrencyData, convertToINR } from '$lib/utils/currencyConverter.js';
+	import { convertToINR } from '$lib/utils/currencyConverter.js';
 	import SkeletonLoader from '$lib/components/ui/SkeletonLoader.svelte';
-	import { ModeWatcher, toggleMode } from 'mode-watcher';
+	import { toggleMode } from 'mode-watcher';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import Sun from 'lucide-svelte/icons/sun';
 	import Moon from 'lucide-svelte/icons/moon';
 
-	let dateRange;
+	let dateRange = null;
 	let eventsPromise = writable(null);
-	let currencyData;
 	let hourlyRate = [40];
 	let totalHours = 0;
 	let totalBilledINR = 0;
 	let currentUSDtoINR = 0;
+	let currencyTimestamp = null;
 
-	$: if (dateRange) {
-		eventsPromise.set(fetchEvents());
+	function handleRateChange(newRate) {
+		currentUSDtoINR = parseFloat(newRate) || 0;
 	}
 
 	$: totalBilledINR = convertToINR(totalHours * hourlyRate[0], currentUSDtoINR);
@@ -68,8 +67,17 @@
 		}
 	}
 
+	async function fetchAndProcessEvents() {
+		if (!dateRange?.original) {
+			alert('Please select a date range first.');
+			return;
+		}
+
+		eventsPromise.set(fetchEvents());
+	}
+
 	async function fetchEvents() {
-		const rawEvents = await fetchCalendarEvents(dateRange);
+		const rawEvents = await fetchCalendarEvents(dateRange?.original);
 		const processedEvents = await Promise.all(
 			rawEvents.map(async (event) => {
 				const startDate = parseDateTime(event.start);
@@ -101,16 +109,19 @@
 		totalHours = processedEvents.reduce((sum, event) => sum + (event.duration || 0), 0);
 		return processedEvents;
 	}
-
-	onMount(async () => {
-		currencyData = await fetchCurrencyData();
-		currentUSDtoINR = currencyData.currentRate;
-	});
 </script>
 
-<main class="container mx-auto space-y-6 p-6 dark:bg-gray-900">
-	<div class="mb-6 flex items-center justify-between">
-		<h1 class="text-3xl font-bold dark:text-white">Timesheet Generator</h1>
+<main class="container mx-auto space-y-6 p-6 dark:bg-gray-950">
+	<div class="mb-7 flex items-center justify-between">
+		<div class="flex items-center space-x-5">
+			<h1 class="text-3xl font-bold dark:text-white">Timesheet Generator</h1>
+			<Badge
+				variant="secondary"
+				class="bg-[#A47EE726] px-3 py-1 text-xs font-semibold text-[#875BE1] hover:bg-[#A47EE726]"
+			>
+				Prototype
+			</Badge>
+		</div>
 		<Button on:click={toggleMode} variant="outline" size="icon">
 			<Sun
 				class="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0"
@@ -123,17 +134,25 @@
 	</div>
 
 	<div class="grid gap-6 md:grid-cols-2">
-		<div class="rounded-lg bg-white p-4 shadow dark:bg-gray-800">
+		<div class="rounded-lg p-4 shadow dark:bg-gray-900">
 			<DateRangePicker on:daterange={(e) => (dateRange = e.detail)} />
+			{#if dateRange?.formatted}
+				<p class="mt-4 text-sm text-muted-foreground">
+					Selected range: {dateRange?.formatted}
+				</p>
+			{/if}
+			<Button on:click={fetchAndProcessEvents} class="mt-4">Fetch and Process</Button>
 		</div>
 
-		<div class="space-y-4 rounded-lg bg-white p-4 shadow dark:bg-gray-800">
+		<div class="space-y-4 rounded-lg bg-white p-4 shadow dark:bg-gray-900">
 			<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
 				<StatsCard
 					title="Current USD to INR"
 					value={`₹${currentUSDtoINR.toFixed(2)}`}
-					change="Updated today"
+					change={currencyTimestamp ? `Updated: ${currencyTimestamp}` : 'Not updated'}
 					progressValue={0}
+					isCurrencyCard={true}
+					onRateChange={handleRateChange}
 				/>
 				<StatsCard
 					title="Total Billed (INR)"
@@ -159,10 +178,10 @@
 		<Tabs>
 			<TabsList class="mb-4">
 				<TabsTrigger value="timesheet">Timesheet</TabsTrigger>
-				<TabsTrigger value="currency">Currency Graph</TabsTrigger>
+				<TabsTrigger value="invoice">Invoice Generation</TabsTrigger>
 			</TabsList>
 			<TabsContent value="timesheet">
-				{#if dateRange}
+				{#if $eventsPromise}
 					{#await $eventsPromise}
 						<SkeletonLoader />
 					{:then events}
@@ -174,16 +193,12 @@
 					<div
 						class="rounded-lg bg-white p-4 text-center text-gray-500 shadow dark:bg-gray-700 dark:text-gray-300"
 					>
-						Please select a date range to view the timesheet.
+						Please select a date range and click "Fetch and Process" to view the timesheet.
 					</div>
 				{/if}
 			</TabsContent>
-			<TabsContent value="currency">
-				{#if currencyData && currencyData.historicalData && currencyData.historicalData.length > 0}
-					<CurrencyGraph historicalData={currencyData.historicalData} />
-				{:else}
-					<p class="dark:text-gray-300">No historical currency data available</p>
-				{/if}
+			<TabsContent value="invoice">
+				<p class="dark:text-gray-300">Invoice functionality coming soon!</p>
 			</TabsContent>
 		</Tabs>
 	</div>

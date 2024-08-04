@@ -7,6 +7,7 @@
 	import { Tabs, TabsContent, TabsList, TabsTrigger } from '$lib/components/ui/tabs/index.js';
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { fetchCalendarEvents } from '$lib/utils/googleCalendar.js';
+	import InvoiceGenerator from '$lib/components/ui/InvoiceGenerator.svelte';
 	import { improveDescription } from '$lib/utils/openai.js';
 	import { convertToINR } from '$lib/utils/currencyConverter.js';
 	import SkeletonLoader from '$lib/components/ui/SkeletonLoader.svelte';
@@ -198,7 +199,7 @@
 				{/if}
 			</TabsContent>
 			<TabsContent value="invoice">
-				<p class="dark:text-gray-300">Invoice functionality coming soon!</p>
+				<InvoiceGenerator totalAmount={totalBilledINR} />
 			</TabsContent>
 		</Tabs>
 	</div>

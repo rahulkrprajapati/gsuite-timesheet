@@ -1,0 +1,28 @@
+{
+  "from": {
+    "name": "John Doe",
+    "address": "123 Main St\nAnytown, State 12345\nCountry"
+  },
+  "to": {
+    "name": "Tech Solutions Inc.",
+    "address": "456 Business Ave\nSuite 789\nMetro City, State 67890\nCountry",
+    "taxId": "TAX123456789"
+  },
+  "items": [
+    {
+      "description": "Consulting Services",
+      "amount": 0
+    }
+  ],
+  "bankDetails": {
+    "name": "John Doe",
+    "accountNo": "1234567890",
+    "bank": "Global Bank",
+    "branch": "Downtown Branch, 789 Finance St, Metro City, State 67890",
+    "ifsc": "GLOB0001234",
+    "pan": "ABCDE1234F",
+    "email": "john.doe@example.com"
+  },
+  "invoiceNumber": "INV-YYYYMMDD-XXX",
+  "date": "2024-08-04"
+}

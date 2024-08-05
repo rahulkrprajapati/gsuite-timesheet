@@ -106,7 +106,9 @@ export async function POST({ request }) {
 											.join('')}
                     <tr class="total">
                         <td>Total</td>
-                        <td class="amount">INR ${invoiceData.items.reduce((sum, item) => sum + item.amount, 0).toLocaleString()}</td>
+                        <td class="amount">INR ${invoiceData.items
+													.reduce((sum, item) => sum + Number(item.amount), 0)
+													.toLocaleString()}</td>
                     </tr>
                 </tbody>
             </table>

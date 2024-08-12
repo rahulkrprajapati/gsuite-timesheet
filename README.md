@@ -3,11 +3,11 @@
 This project is a GSuite Timesheet Generator that automates the process of creating timesheets from Google Calendar events. It includes features for invoice generation and currency conversion.
 
 ## Screenshots
-
+![Screenshot 4](images/SCR-20240804-tpqs.png)
 ![Screenshot 1](images/Capture-2024-08-04-225125.png)
 ![Screenshot 2](images/Capture-2024-08-04-230212.png)
 ![Screenshot 3](images/Capture-2024-08-04-230301.png)
-![Screenshot 4](images/SCR-20240804-tpqs.png)
+
 
 ## Prerequisites
 

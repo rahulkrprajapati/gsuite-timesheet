@@ -59,37 +59,39 @@ export async function POST({ request }) {
       timeMax: end,
       singleEvents: true,
       orderBy: 'startTime',
-      showDeleted: true,
+      showDeleted: false,
       maxResults: 2500,
       timeZone: 'UTC'
     });
 
-    const allEvents = res.data.items.map(event => ({
-      kind: event.kind,
-      etag: event.etag,
-      id: event.id,
-      status: event.status,
-      htmlLink: event.htmlLink,
-      created: event.created,
-      updated: event.updated,
-      summary: event.summary,
-      description: event.description,
-      creator: event.creator,
-      organizer: event.organizer,
-      start: event.start,
-      end: event.end,
-      recurringEventId: event.recurringEventId,
-      originalStartTime: event.originalStartTime,
-      transparency: event.transparency,
-      visibility: event.visibility,
-      iCalUID: event.iCalUID,
-      sequence: event.sequence,
-      reminders: event.reminders,
-      workingLocationProperties: event.workingLocationProperties,
-      eventType: event.eventType || 'default',
-      attendees: event.attendees || [], // Add this line to include attendees
-      location: event.location // Also include location if it's relevant
-    }));
+    const allEvents = res.data.items
+      .filter(event => event.status !== 'cancelled')
+      .map(event => ({
+        kind: event.kind,
+        etag: event.etag,
+        id: event.id,
+        status: event.status,
+        htmlLink: event.htmlLink,
+        created: event.created,
+        updated: event.updated,
+        summary: event.summary,
+        description: event.description,
+        creator: event.creator,
+        organizer: event.organizer,
+        start: event.start,
+        end: event.end,
+        recurringEventId: event.recurringEventId,
+        originalStartTime: event.originalStartTime,
+        transparency: event.transparency,
+        visibility: event.visibility,
+        iCalUID: event.iCalUID,
+        sequence: event.sequence,
+        reminders: event.reminders,
+        workingLocationProperties: event.workingLocationProperties,
+        eventType: event.eventType || 'default',
+        attendees: event.attendees || [],
+        location: event.location
+      }));
 
     return json(allEvents);
   } catch (error) {
